@@ -1,5 +1,5 @@
 
-// Medical term API service for fetching medical terminology information
+// Medical term API service using DeepSeek for simplified terminology
 
 /**
  * API response types for medical terminology
@@ -21,8 +21,8 @@ export interface ApiResponse {
   error?: string;
 }
 
-// API endpoint constants
-const API_BASE_URL = "https://api.medical-terms-simplified.org/v1";
+// DeepSeek API endpoint
+const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
 
 /**
  * Get the API key from local storage
@@ -33,7 +33,67 @@ const getApiKey = (): string => {
 };
 
 /**
- * Simplify text by identifying medical terms through the API
+ * Extract medical terms and their definitions from the DeepSeek response
+ * @param text Original text
+ * @param response The response from DeepSeek
+ * @returns Structured terms with definitions
+ */
+const extractTermsFromResponse = (text: string, response: any): ApiTerm[] => {
+  try {
+    // Extract the content from the DeepSeek response
+    const content = response.choices[0].message.content;
+    
+    // Parse the JSON if the model returned JSON format
+    let parsedContent;
+    try {
+      // Try to extract JSON if it's in the response
+      const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/) || 
+                        content.match(/\{[\s\S]*\}/);
+      
+      const jsonString = jsonMatch ? jsonMatch[1] || jsonMatch[0] : content;
+      parsedContent = JSON.parse(jsonString);
+    } catch (e) {
+      console.warn("Could not parse JSON from response, using text extraction fallback");
+      
+      // Use regex to extract medical terms if JSON parsing fails
+      const terms: ApiTerm[] = [];
+      const termRegex = /(\*\*|__)([^*_]+)(\*\*|__)\s*:\s*([^\n]+)/g;
+      let match;
+      let id = 1;
+      
+      while ((match = termRegex.exec(content)) !== null) {
+        terms.push({
+          id: `term-${id++}`,
+          term: match[2].trim(),
+          simplified: "",
+          definition: match[4].trim(),
+          wikiLink: undefined
+        });
+      }
+      
+      return terms;
+    }
+    
+    // If we successfully parsed JSON, extract terms
+    if (parsedContent && Array.isArray(parsedContent.terms)) {
+      return parsedContent.terms.map((term: any, index: number) => ({
+        id: `term-${index + 1}`,
+        term: term.term,
+        simplified: term.simplified || term.layman_term || "",
+        definition: term.definition,
+        wikiLink: term.wikiLink || term.wiki_link || undefined
+      }));
+    }
+    
+    return [];
+  } catch (error) {
+    console.error("Error extracting terms from DeepSeek response:", error);
+    return [];
+  }
+};
+
+/**
+ * Simplify text by identifying medical terms through the DeepSeek API
  * @param text The medical text to simplify
  * @returns Simplified content with identified terms
  */
@@ -47,23 +107,67 @@ export const fetchSimplifiedText = async (text: string): Promise<ApiResponse> =>
   }
   
   try {
-    const response = await fetch(`${API_BASE_URL}/simplify`, {
+    const prompt = `
+      Analyze the following medical text and identify all medical terms, jargon, or complex terminology. 
+      For each term, provide:
+      1. The original medical term
+      2. A simplified explanation in layman's terms
+      3. A brief definition
+      4. (Optional) A relevant Wikipedia link
+      
+      Format your response as a JSON object with an array of terms:
+      {
+        "terms": [
+          {
+            "term": "medical term",
+            "simplified": "simple explanation",
+            "definition": "definition of the term",
+            "wikiLink": "relevant wikipedia link (optional)"
+          }
+        ]
+      }
+      
+      Here is the text to analyze:
+      "${text}"
+    `;
+
+    const response = await fetch(DEEPSEEK_API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${apiKey}`
       },
-      body: JSON.stringify({ text })
+      body: JSON.stringify({
+        model: "deepseek-chat",
+        messages: [
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        temperature: 0.2, // Lower temperature for more consistent responses
+        max_tokens: 2000
+      })
     });
 
     if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
+      const errorData = await response.json();
+      throw new Error(`DeepSeek API error: ${errorData.error?.message || response.status}`);
     }
 
-    return await response.json();
+    const responseData = await response.json();
+    const terms = extractTermsFromResponse(text, responseData);
+    
+    return {
+      success: true,
+      data: {
+        sourceText: text,
+        terms
+      }
+    };
   } catch (error) {
     console.error("Error fetching simplified text:", error);
-    // For now, we'll return mock data if the API fails
+    // Return mock data if the API fails
     return getMockApiResponse(text);
   }
 };
@@ -83,20 +187,16 @@ export const processImageForTerms = async (imageData: string): Promise<ApiRespon
   }
   
   try {
-    const response = await fetch(`${API_BASE_URL}/process-image`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({ image: imageData })
-    });
-
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
-    }
-
-    return await response.json();
+    // For image processing with DeepSeek, we first need to understand if their API supports
+    // image analysis or if we need to use a different API for OCR first.
+    // For now, we'll return mock data as DeepSeek might not support direct image processing
+    
+    // TODO: Implement actual DeepSeek image processing if supported
+    // This would involve either:
+    // 1. Using DeepSeek's API directly if they support image analysis
+    // 2. Using an OCR service first to extract text, then sending to DeepSeek
+    
+    return getMockImageApiResponse();
   } catch (error) {
     console.error("Error processing image:", error);
     // Return mock data for image processing if API fails

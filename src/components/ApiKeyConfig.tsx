@@ -22,7 +22,7 @@ const ApiKeyConfig = () => {
     if (apiKey.trim()) {
       localStorage.setItem("medicalTermsApiKey", apiKey.trim());
       // Add code to refresh any global state if needed
-      toast.success("API key saved successfully");
+      toast.success("DeepSeek API key saved successfully");
       setIsDialogOpen(false);
     } else {
       toast.error("Please enter a valid API key");
@@ -43,29 +43,29 @@ const ApiKeyConfig = () => {
           {isApiKeyConfigured ? (
             <>
               <Check className="h-4 w-4 text-green-500" />
-              API Configured
+              DeepSeek API Configured
             </>
           ) : (
             <>
               <Key className="h-4 w-4" />
-              Set API Key
+              Set DeepSeek API Key
             </>
           )}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Configure API Key</DialogTitle>
+          <DialogTitle>Configure DeepSeek API Key</DialogTitle>
         </DialogHeader>
         <div className="py-4">
           <p className="text-sm text-gray-600 mb-4">
-            Enter your API key for the Medical Terms Simplifier API. 
-            Your key will be stored only in your browser.
+            Enter your DeepSeek API key to enable medical terminology simplification.
+            Your key will be stored only in your browser's local storage.
           </p>
           <div className="flex w-full max-w-sm items-center space-x-2">
             <Input
               type="password"
-              placeholder="Enter API key"
+              placeholder="Enter DeepSeek API key"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
             />
