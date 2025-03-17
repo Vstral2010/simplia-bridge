@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { Camera, Upload, X, Clipboard, ScanLine, AlertCircle, Image } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -6,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { simplifyFromImage } from "@/lib/simplifier";
 import SimplifiedView from "./SimplifiedView";
+import ApiKeyConfig from "./ApiKeyConfig";
 
 const ImageUploader = () => {
   const [image, setImage] = useState<string | null>(null);
@@ -84,6 +84,10 @@ const ImageUploader = () => {
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               Upload an image of a medical document, report, or prescription to extract and simplify complex terminology
             </p>
+          </div>
+
+          <div className="flex justify-end mb-4">
+            <ApiKeyConfig />
           </div>
 
           <div className="bg-white rounded-xl shadow-glass border border-gray-100 overflow-hidden">

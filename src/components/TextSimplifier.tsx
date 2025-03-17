@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { 
   FilePlus2, 
@@ -14,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import SimplifiedView from "./SimplifiedView";
+import ApiKeyConfig from "./ApiKeyConfig";
 import { toast } from "sonner";
 
 interface TextSimplifierProps {
@@ -102,6 +102,10 @@ const TextSimplifier = ({ initialText = "" }: TextSimplifierProps) => {
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               Paste medical content and our AI will identify and explain complex medical terms in simple language
             </p>
+          </div>
+
+          <div className="flex justify-end mb-4">
+            <ApiKeyConfig />
           </div>
 
           <Tabs defaultValue="input" className="w-full">
