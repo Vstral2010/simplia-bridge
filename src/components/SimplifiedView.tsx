@@ -12,7 +12,8 @@ import {
   BookmarkCheck,
   AlertCircle,
   Book,
-  ThumbsUp
+  ThumbsUp,
+  ExternalLink
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -21,6 +22,7 @@ interface Term {
   simplified: string;
   definition: string;
   context?: string;
+  wikiLink?: string;
 }
 
 interface SimplifiedContent {
@@ -118,6 +120,19 @@ const SimplifiedView = ({ content }: SimplifiedViewProps) => {
                         {term.definition}
                       </div>
                     </>
+                  )}
+                  {term.wikiLink && (
+                    <div className="mt-3 pt-2 border-t border-gray-100">
+                      <a 
+                        href={term.wikiLink} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-sm text-medical-600 hover:text-medical-800 flex items-center gap-1.5"
+                      >
+                        <ExternalLink size={14} />
+                        Learn more on Wikipedia
+                      </a>
+                    </div>
                   )}
                 </HoverCardContent>
               </HoverCard>
